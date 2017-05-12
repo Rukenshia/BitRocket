@@ -1,36 +1,60 @@
 /*jshint esversion: 6 */
 
-const config = {
-    color: '#225159'
-};
-
-const showLinks = {
-    decline: true,
-    approve: true,
-    merge: true,
-    commits: true,
-    comments: true
-};
-
-const showNotifications = {
-    push: true,
-    fork: true,
-    comment: true,
-    pullrequest_created: true,
-    pullrequest_rejected: true,
-    pullrequest_approved: true,
-    pullrequest_unapproved: true,
-    pullrequest_fulfilled: true,
-    pullrequest_updated: true,
-    pullrequest_comment_created: true,
-    pullrequest_comment_deleted: true,
-    pullrequest_comment_updated: true
-};
-
-const displayDescription = {
-    pullrequest_created: false,
-    pullrequest_merged: false,
-};
+const settings = {
+    color: '#225159',
+    events: {
+        repo: {
+            push: {
+                show: true,
+            },
+            fork: {
+                show: true,
+            },
+            commit_comment_created: {
+                show: true,
+            }
+        },
+        pullrequest: {
+            created: {
+                show: true,
+                display_description: false,
+                show_links: {
+                    decline: true,
+                    approve: true,
+                    merge: true,
+                    commits: true,
+                    comments: true,
+                }
+            },
+            updated: {
+                show: true,
+                display_description: false,
+            },
+            approved: {
+                show: true,
+            },
+            unapproved: {
+                show: true,
+            },
+            fulfilled: {
+                show: true,
+                display_description: false,
+            },
+            rejected: {
+                show: true,
+            },
+            comment_created: {
+                show: true,
+            },
+            comment_updated: {
+                show: true,
+            },
+            comment_deleted: {
+                show: true,
+            },
+        }
+    }
+}
 
 function get_basic_info(request) {
   const author = {
@@ -58,13 +82,22 @@ function create_attachement(author, text){
     return attachment;
 }
 
-const processors = {
+const processors = { };
+
+processors.repo = {
     push(request) {
         const info = get_basic_info(request);
         const commits = request.content.push.changes[0].commits;
 
+        let branch_name = '';
+        if (request.content.push.changes[0].new) {
+            branch_name = request.content.push.changes[0].new.name;
+        } else if (request.content.push.changes[0].old) {
+            branch_name = request.content.push.changes[0].old.name;
+        }
+
         let text = '';
-        text += "On repository " + "[`" + info.repository.name + "@" + request.content.push.new.name + "`]" + "(" + info.repository.link + ")" + ": " + "\n";
+        text += "On repository " + "[" + info.repository.name + "]" + "(" + info.repository.link + ")" + " @ `" + branch_name + "`: " + "\n";
         for (let commit of commits) {
             text += "*Pushed* " + "[" + commit.hash.toString().substring(0,6) + "]" + "(" + commit.links.html.href + ")" + ": " + commit.message;
         }
@@ -73,7 +106,7 @@ const processors = {
             content: {
                 attachments: [create_attachement(info.author, text)],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
@@ -92,31 +125,34 @@ const processors = {
             content: {
                 attachments: [create_attachement(info.author, text)],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    comment(request) {
+    comment_created(request) {
         const info = get_basic_info(request);
 
         const commit = request.content.comment.commit;
         const comment = request.content.comment;
 
         let text = '';
-        text += "On repository " + "[" + info.repository.name + "]" + "(" + info.repository.link + ")" + ": " + "\n";
+        text += "On repository " + "[" + info.repository.name + "]" + "(" + info.repository.link + ") " + ": " + "\n";
         text += "*Commented* " + "[" + commit.hash.toString().substring(0,6) + "]" + "(" + commit.links.html.href + ")" + ": " + comment.content.raw + "\n";
 
         return {
             content: {
                 attachments: [create_attachement(info.author, text)],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
+};
 
-    pullrequest_created(request) {
+
+processors.pullrequest = {
+    created(request) {
         const author = {
             username: request.content.pullrequest.author.username,
             displayname: request.content.pullrequest.author.display_name
@@ -141,12 +177,14 @@ const processors = {
         let text = '';
         text += author.displayname + ' (@' + author.username + ') opened a new pull request:\n';
         text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
-        if (displayDescription.pullrequest_created) {
+        if (settings.events.pullrequest.created.display_description) {
             text += 'Description:\n';
             text += pullrequest.description + '\n';
         }
-      
+
         let actions = 'Actions:';
+
+        const showLinks = settings.events.pullrequest.created.show_links;
         if(showLinks.decline) {
             actions += ' | [decline](' + links.decline + ')';
         }
@@ -174,12 +212,12 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_rejected(request) {
+    rejected(request) {
         const author = {
             username: request.content.pullrequest.author.username,
             displayname: request.content.pullrequest.author.display_name
@@ -205,12 +243,12 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_approved(request) {
+    approved(request) {
         const author = {
             username: request.content.approval.user.username,
             displayname: request.content.approval.user.display_name
@@ -234,12 +272,12 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_unapproved(request) {
+    unapproved(request) {
         const author = {
             username: request.content.approval.user.username,
             displayname: request.content.approval.user.display_name
@@ -263,12 +301,12 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_fulfilled(request) {
+    fulfilled(request) {
         const author = {
             username: request.content.pullrequest.author.username,
             displayname: request.content.pullrequest.author.display_name
@@ -286,7 +324,7 @@ const processors = {
         text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
 
         if(pullrequest.description !== '') {
-            if (displayDescription.pullrequest_created) {
+            if (settings.events.pullrequest.fulfilled.display_description) {
                 text += 'Description:\n';
                 text += pullrequest.description + '\n';
             }
@@ -299,12 +337,12 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_updated(request) {
+    updated(request) {
         const author = {
             username: request.content.pullrequest.author.username,
             displayname: request.content.pullrequest.author.display_name
@@ -318,10 +356,14 @@ const processors = {
         let text = '';
         text += author.displayname + ' (@' + author.username + ') updated a pull request:\n';
         text += pullrequest.sourcebranch + ' => ' + pullrequest.destinationbranch + '\n';
+
         if(pullrequest.description !== '') {
-            text += 'Description:\n';
-            text += pullrequest.description + '\n';
+            if (settings.events.pullrequest.updated.display_description) {
+                text += 'Description:\n';
+                text += pullrequest.description + '\n';
+            }
         }
+
         const attachment = {
             author_name: 'UPDATED: ' + pullrequest.title
         };
@@ -330,20 +372,20 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_comment_created(request) {
+    comment_created(request) {
         const author = {
-            username: request.content.pullrequest.user.username,
-            displayname: request.content.pullrequest.user.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const comment = {
-            text: request.content.pullrequest.content.raw,
-            id: request.content.pullrequest.id,
-            link: request.content.pullrequest.links.self.href
+            text: request.content.comment.content.raw,
+            id: request.content.comment.id,
+            link: request.content.comment.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') commented on a pull request:\n';
@@ -358,20 +400,20 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_comment_deleted(request) {
+    comment_deleted(request) {
         const author = {
-            username: request.content.pullrequest.user.username,
-            displayname: request.content.pullrequest.user.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const comment = {
-            text: request.content.pullrequest.content.raw,
-            id: request.content.pullrequest.id,
-            link: request.content.pullrequest.links.self.href
+            text: request.content.comment.content.raw,
+            id: request.content.comment.id,
+            link: request.content.comment.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') deleted a comment on a pull request:\n';
@@ -386,20 +428,20 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     },
 
-    pullrequest_comment_updated(request) {
+    comment_updated(request) {
         const author = {
-            username: request.content.pullrequest.user.username,
-            displayname: request.content.pullrequest.user.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const comment = {
-            text: request.content.pullrequest.content.raw,
-            id: request.content.pullrequest.id,
-            link: request.content.pullrequest.links.self.href
+            text: request.content.comment.content.raw,
+            id: request.content.comment.id,
+            link: request.content.comment.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') updated a comment on a pull request:\n';
@@ -414,7 +456,7 @@ const processors = {
                 text: text,
                 attachments: [attachment],
                 parseUrls: false,
-                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+                color: ((settings.color !== '') ? '#' + settings.color.replace('#', '') : '#225159')
             }
         };
     }
@@ -432,18 +474,16 @@ class Script {
             }
         };
 
-        let keys = Object.keys(request.content);
-        for (let key of keys) {
-            if (showNotifications[key] === true) {
-                result = processors[key](request);
+        if (request.headers['x-event-key']) {
+            const [ type, event ] = request.headers['x-event-key'].split(':');
+
+            if (!settings.events[type] || !settings.events[type][event]) {
+                result.message = `event ${type}:${event} cannot be handled`;
+                return result;
             }
-        }
 
-        if (result.error && request.headers['x-event-key']) {
-            const key = request.headers['x-event-key'].replace(':', '_');
-
-            if (showNotifications[key] === true) {
-                result = processors[key](request);
+            if (settings.events[type][event].show) {
+                result = processors[type][event](request);
             }
         }
         return result;
