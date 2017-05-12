@@ -27,6 +27,11 @@ const showNotifications = {
     pullrequest_comment_updated: true
 };
 
+const displayDescription = {
+    pullrequest_created: false,
+    pullrequest_merged: false,
+};
+
 function get_basic_info(request) {
   const author = {
       displayname: request.content.actor.display_name,
@@ -59,7 +64,7 @@ const processors = {
         const commits = request.content.push.changes[0].commits;
 
         let text = '';
-        text += "On repository " + "[" + info.repository.name + "]" + "(" + info.repository.link + ")" + ": " + "\n";
+        text += "On repository " + "[`" + info.repository.name + "@" + request.content.push.new.name + "`]" + "(" + info.repository.link + ")" + ": " + "\n";
         for (let commit of commits) {
             text += "*Pushed* " + "[" + commit.hash.toString().substring(0,6) + "]" + "(" + commit.links.html.href + ")" + ": " + commit.message;
         }
@@ -136,8 +141,11 @@ const processors = {
         let text = '';
         text += author.displayname + ' (@' + author.username + ') opened a new pull request:\n';
         text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
-        text += 'Description:\n';
-        text += pullrequest.description + '\n';
+        if (displayDescription.pullrequest_created) {
+            text += 'Description:\n';
+            text += pullrequest.description + '\n';
+        }
+      
         let actions = 'Actions:';
         if(showLinks.decline) {
             actions += ' | [decline](' + links.decline + ')';
@@ -276,9 +284,12 @@ const processors = {
         let text = '';
         text += author.displayname + ' (@' + author.username + ') merged a pull request:\n';
         text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
+
         if(pullrequest.description !== '') {
-            text += 'Description:\n';
-            text += pullrequest.description + '\n';
+            if (displayDescription.pullrequest_created) {
+                text += 'Description:\n';
+                text += pullrequest.description + '\n';
+            }
         }
         const attachment = {
             author_name: 'MERGED: ' + pullrequest.title
