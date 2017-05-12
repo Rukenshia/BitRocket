@@ -1,6 +1,6 @@
 ![Bitrocket Logo][bitrocketlogo]
 <br />
-# BitRocket
+# BitRocket - BitBucket Cloud only Fork
 <br />
 <p>
 <b><a href="#overview">Overview</a></b>
@@ -16,7 +16,7 @@
 <br /><br />
 
 ## Overview <a name="overview"></a>
-Connect [Alassian BitBucket Server][BitBucketserver] or [Alassian BitBucket Cloud][BitBucketcloud] with [Rocket.Chat][rocketchat] and send notifications to users or channels on each push, pull requests or comments on pull requests to any branch.
+Connect [Alassian BitBucket Cloud][BitBucketcloud] with [Rocket.Chat][rocketchat] and send notifications to users or channels on each push, pull requests or comments on pull requests to any branch. This is a fork that only maintains the BitBucket Cloud payloads.
 <br /><br /><br /><br />
 
 ## Features <a name="features"></a>
@@ -70,37 +70,7 @@ When using BitBucket Cloud you have to insert the complete code of the file `BBC
 <br /><br />
 
 ###### Configure Messages:
-Define which links in pull request notification should be shown
-```
-const showLinks = {
-    decline: true,
-    approve: true,
-    merge: true,
-    commits: true,
-    comments: true
-};
-```
-<br /><br />
-Now set, which notification you want to receive in Rocket.Chat
-```
-const showNotifications = {
-    push: true,
-    fork: true,
-    comment: true,
-    pullrequest_created: true,
-    pullrequest_declined: true,
-    pullrequest_merged: true,
-    pullrequest_updated: true,
-    pullrequest_comment_created: true,
-    pullrequest_comment_deleted: true,
-    pullrequest_comment_updated: true
-};
-```
-<br /><br /><br /><br />
-
-##### BitBucket Server Script
-When using BitBucket Server you have to insert the complete code of the file `BBServer_POSTReceiveHook.js` into this field.
-<br /><br />
+Please refer to the `settings` object in the `BBCloud__POSTReceiveHook.js`.
 
 #### Save changes
 Now click on "SAVE CHANGES" to get the required information (it is possible that you'll receive an empty error message below the "Script" option - just ignore it).
@@ -131,8 +101,8 @@ You can select everything here and overwrite this settings in the script-config 
 * Pull Request Events
     - Created
     - Updated
-    - ~~Approved~~ _(BitBucket provides too less info)_
-    - ~~Approval Removed~~ _(BitBucket provides too less info)_
+    - Approved
+    - Approval Removed
     - Merged
     - Declined
     - Comment Created
@@ -143,22 +113,6 @@ You can select everything here and overwrite this settings in the script-config 
 Click on "Save" and your done!
 <br /><br /><br /><br />
 
-### Configure BitBucket Server
-
-#### Install Post-Receive Webhook plugin
-If it's not installed yet, you need to install the free [BitBucket Server Web Post Hooks Plugin][BitBucketplugin].<br />
-To install the plugin login to your BitBucket Server instance an navigate to Administration and there click on "Find new add-ons" under section ADD-ONS.<br />
-Search for `BitBucket Server Web Post Hooks Plugin` and click on install.
-<br /><br />
-
-#### Create Post-Receive WebHook in repository
-Once the [BitBucket Server Web Post Hooks Plugin][BitBucketplugin] is installed, navigate to the desired repository and click on "Settings" in the left column.<br />
-Now click on "Hooks" and enable "Post-Receive WebHooks".<br />
-After enabling "Post-Receive WebHooks" klick on the little pen-icon next to the plugin title. The opening modal provides an input field for defining your webhook url.<br />
-Please enter the correct url to your Rocket.Chat webhook (just copy it from Rocket.Chat integration settings).<br />
-Click on "Save" and your done!
-<br /><br /><br /><br />
-
 ### Test connection
 To test wether communication between Bitbuket and Rocket.Chat works or not, just push any changes to the repository you've set up the hook.<br />
 Did your channel or user receive a notification about the push? Congrats - everything is fine!<br />
@@ -166,7 +120,7 @@ No message received? Please double check all steps. If everything is set up as m
 <br /><br /><br /><br />
 
 ## Add more repositories <a name="more"></a>
-To inform your Rocket.Chat channel or user about changes on other repositories, just follow the instructions on how to create the Post-Receive WebHook in BitBucket Cloud/Server again. You're not limited in the number of repositories which send information to Rocket.Chat. 
+To inform your Rocket.Chat channel or user about changes on other repositories, just follow the instructions on how to create the Post-Receive WebHook in BitBucket Cloud/Server again. You're not limited in the number of repositories which send information to Rocket.Chat.
 <br /><br /><br /><br />
 
 ## Want to contribute? <a name="contribute"></a>
@@ -186,11 +140,10 @@ Copyright (c) 2016 „[Finndrop Studios][finndrop]“
 Licensed under the [MIT license][license].
 
 <!-- links -->
-[BitBucketserver]: https://BitBucket.org/product/server "Atlassian BitBucket Server"
 [BitBucketcloud]: https://BitBucket.org "Atlassian BitBucket Cloud"
 [rocketchat]: https://rocket.chat/ "Rocket.Chat"
 [BitBucketplugin]: https://marketplace.atlassian.com/plugins/com.atlassian.stash.plugin.stash-web-post-receive-hooks-plugin/server/overview "BitBucket Server Web Post Hooks Plugin"
-[source]: https://github.com/FinndropStudios/BitRocket/archive/master.zip "Download BitRocket"
+[source]: https://github.com/Rukenshia/BitRocket/archive/master.zip "Download BitRocket Fork"
 [finndrop]: https://www.finndrop.de "Finndrop Studios"
 [license]: license/LICENSE-MIT.txt "MIT License"
 
