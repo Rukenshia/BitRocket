@@ -17,8 +17,10 @@ const showNotifications = {
     fork: true,
     comment: true,
     pullrequest_created: true,
-    pullrequest_declined: true,
-    pullrequest_merged: true,
+    pullrequest_rejected: true,
+    pullrequest_approved: true,
+    pullrequest_unapproved: true,
+    pullrequest_fulfilled: true,
     pullrequest_updated: true,
     pullrequest_comment_created: true,
     pullrequest_comment_deleted: true,
@@ -116,35 +118,34 @@ const processors = {
 
     pullrequest_created(request) {
         const author = {
-            username: request.content.pullrequest_created.author.username,
-            displayname: request.content.pullrequest_created.author.display_name
+            username: request.content.pullrequest.author.username,
+            displayname: request.content.pullrequest.author.display_name
         };
         const pullrequest = {
-            sourcerepo: request.content.pullrequest_created.source.repository.name,
-            sourcebranch: request.content.pullrequest_created.source.branch.name,
-            destinationrepo: request.content.pullrequest_created.destination.repository.name,
-            destinationbranch: request.content.pullrequest_created.destination.branch.name,
-            id: request.content.pullrequest_created.id,
-            title: request.content.pullrequest_created.title,
-            description: request.content.pullrequest_created.description
+            sourcerepo: request.content.pullrequest.source.repository.name,
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationrepo: request.content.pullrequest.destination.repository.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            id: request.content.pullrequest.id,
+            title: request.content.pullrequest.title,
+            description: request.content.pullrequest.description
         };
         const links = {
-            self: request.content.pullrequest_created.links.self.href,
-            decline: request.content.pullrequest_created.links.decline.href,
-            approve: request.content.pullrequest_created.links.approve.href,
-            merge: request.content.pullrequest_created.links.merge.href,
-            commits: request.content.pullrequest_created.links.commits.href,
-            comments: request.content.pullrequest_created.links.comments.href
+            self: request.content.pullrequest.links.self.href,
+            decline: request.content.pullrequest.links.decline.href,
+            approve: request.content.pullrequest.links.approve.href,
+            merge: request.content.pullrequest.links.merge.href,
+            commits: request.content.pullrequest.links.commits.href,
+            comments: request.content.pullrequest.links.comments.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') opened a new pull request:\n';
-        text += pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + ' => ' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '\n\n';
-        
+        text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
         if (displayDescription.pullrequest_created) {
             text += 'Description:\n';
             text += pullrequest.description + '\n';
         }
- 
+      
         let actions = 'Actions:';
         if(showLinks.decline) {
             actions += ' | [decline](' + links.decline + ')';
@@ -178,22 +179,22 @@ const processors = {
         };
     },
 
-    pullrequest_declined(request) {
+    pullrequest_rejected(request) {
         const author = {
-            username: request.content.pullrequest_declined.author.username,
-            displayname: request.content.pullrequest_declined.author.display_name
+            username: request.content.pullrequest.author.username,
+            displayname: request.content.pullrequest.author.display_name
         };
         const pullrequest = {
-            sourcerepo: request.content.pullrequest_declined.source.repository.name,
-            sourcebranch: request.content.pullrequest_declined.source.branch.name,
-            destinationrepo: request.content.pullrequest_declined.destination.repository.name,
-            destinationbranch: request.content.pullrequest_declined.destination.branch.name,
-            title: request.content.pullrequest_declined.title,
-            reason: request.content.pullrequest_declined.reason
+            sourcerepo: request.content.pullrequest.source.repository.name,
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationrepo: request.content.pullrequest.destination.repository.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            title: request.content.pullrequest.title,
+            reason: request.content.pullrequest.reason
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') declined a pull request:\n';
-        text += pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + ' => ' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '\n';
+        text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
         text += 'Reason:\n';
         text += pullrequest.reason + '\n';
         const attachment = {
@@ -209,23 +210,81 @@ const processors = {
         };
     },
 
-    pullrequest_merged(request) {
+    pullrequest_approved(request) {
         const author = {
-            username: request.content.pullrequest_merged.author.username,
-            displayname: request.content.pullrequest_merged.author.display_name
+            username: request.content.approval.user.username,
+            displayname: request.content.approval.user.display_name
         };
         const pullrequest = {
-            sourcerepo: request.content.pullrequest_merged.source.repository.name,
-            sourcebranch: request.content.pullrequest_merged.source.branch.name,
-            destinationrepo: request.content.pullrequest_merged.destination.repository.name,
-            destinationbranch: request.content.pullrequest_merged.destination.branch.name,
-            title: request.content.pullrequest_merged.title,
-            description: request.content.pullrequest_merged.description
+            sourcerepo: request.content.pullrequest.source.repository.name,
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationrepo: request.content.pullrequest.destination.repository.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            title: request.content.pullrequest.title,
+            reason: request.content.pullrequest.reason
+        };
+        let text = '';
+        text += author.displayname + ' (@' + author.username + ') approved a pull request:\n';
+        text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
+        const attachment = {
+            author_name: 'APPROVED: ' + pullrequest.title
+        };
+        return {
+            content: {
+                text: text,
+                attachments: [attachment],
+                parseUrls: false,
+                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+            }
+        };
+    },
+
+    pullrequest_unapproved(request) {
+        const author = {
+            username: request.content.approval.user.username,
+            displayname: request.content.approval.user.display_name
+        };
+        const pullrequest = {
+            sourcerepo: request.content.pullrequest.source.repository.name,
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationrepo: request.content.pullrequest.destination.repository.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            title: request.content.pullrequest.title,
+            reason: request.content.pullrequest.reason
+        };
+        let text = '';
+        text += author.displayname + ' (@' + author.username + ') unapproved a pull request:\n';
+        text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
+        const attachment = {
+            author_name: 'UNAPPROVED: ' + pullrequest.title
+        };
+        return {
+            content: {
+                text: text,
+                attachments: [attachment],
+                parseUrls: false,
+                color: ((config.color !== '') ? '#' + config.color.replace('#', '') : '#225159')
+            }
+        };
+    },
+
+    pullrequest_fulfilled(request) {
+        const author = {
+            username: request.content.pullrequest.author.username,
+            displayname: request.content.pullrequest.author.display_name
+        };
+        const pullrequest = {
+            sourcerepo: request.content.pullrequest.source.repository.name,
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationrepo: request.content.pullrequest.destination.repository.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            title: request.content.pullrequest.title,
+            description: request.content.pullrequest.description
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') merged a pull request:\n';
-        text += pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + ' => ' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '\n';
-        
+        text += '`' + pullrequest.sourcerepo + '/' + pullrequest.sourcebranch + '` => `' + pullrequest.destinationrepo + '/' + pullrequest.destinationbranch + '`\n\n';
+
         if(pullrequest.description !== '') {
             if (displayDescription.pullrequest_created) {
                 text += 'Description:\n';
@@ -247,14 +306,14 @@ const processors = {
 
     pullrequest_updated(request) {
         const author = {
-            username: request.content.pullrequest_updated.author.username,
-            displayname: request.content.pullrequest_updated.author.display_name
+            username: request.content.pullrequest.author.username,
+            displayname: request.content.pullrequest.author.display_name
         };
         const pullrequest = {
-            sourcebranch: request.content.pullrequest_updated.source.branch.name,
-            destinationbranch: request.content.pullrequest_updated.destination.branch.name,
-            title: request.content.pullrequest_updated.title,
-            description: request.content.pullrequest_updated.description
+            sourcebranch: request.content.pullrequest.source.branch.name,
+            destinationbranch: request.content.pullrequest.destination.branch.name,
+            title: request.content.pullrequest.title,
+            description: request.content.pullrequest.description
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') updated a pull request:\n';
@@ -278,13 +337,13 @@ const processors = {
 
     pullrequest_comment_created(request) {
         const author = {
-            username: request.content.pullrequest_comment_created.user.username,
-            displayname: request.content.pullrequest_comment_created.user.display_name
+            username: request.content.pullrequest.user.username,
+            displayname: request.content.pullrequest.user.display_name
         };
         const comment = {
-            text: request.content.pullrequest_comment_created.content.raw,
-            id: request.content.pullrequest_comment_created.id,
-            link: request.content.pullrequest_comment_created.links.self.href
+            text: request.content.pullrequest.content.raw,
+            id: request.content.pullrequest.id,
+            link: request.content.pullrequest.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') commented on a pull request:\n';
@@ -306,13 +365,13 @@ const processors = {
 
     pullrequest_comment_deleted(request) {
         const author = {
-            username: request.content.pullrequest_comment_deleted.user.username,
-            displayname: request.content.pullrequest_comment_deleted.user.display_name
+            username: request.content.pullrequest.user.username,
+            displayname: request.content.pullrequest.user.display_name
         };
         const comment = {
-            text: request.content.pullrequest_comment_deleted.content.raw,
-            id: request.content.pullrequest_comment_deleted.id,
-            link: request.content.pullrequest_comment_deleted.links.self.href
+            text: request.content.pullrequest.content.raw,
+            id: request.content.pullrequest.id,
+            link: request.content.pullrequest.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') deleted a comment on a pull request:\n';
@@ -334,13 +393,13 @@ const processors = {
 
     pullrequest_comment_updated(request) {
         const author = {
-            username: request.content.pullrequest_comment_updated.user.username,
-            displayname: request.content.pullrequest_comment_updated.user.display_name
+            username: request.content.pullrequest.user.username,
+            displayname: request.content.pullrequest.user.display_name
         };
         const comment = {
-            text: request.content.pullrequest_comment_updated.content.raw,
-            id: request.content.pullrequest_comment_updated.id,
-            link: request.content.pullrequest_comment_updated.links.self.href
+            text: request.content.pullrequest.content.raw,
+            id: request.content.pullrequest.id,
+            link: request.content.pullrequest.links.self.href
         };
         let text = '';
         text += author.displayname + ' (@' + author.username + ') updated a comment on a pull request:\n';
@@ -375,6 +434,14 @@ class Script {
 
         let keys = Object.keys(request.content);
         for (let key of keys) {
+            if (showNotifications[key] === true) {
+                result = processors[key](request);
+            }
+        }
+
+        if (result.error && request.headers['x-event-key']) {
+            const key = request.headers['x-event-key'].replace(':', '_');
+
             if (showNotifications[key] === true) {
                 result = processors[key](request);
             }
