@@ -219,8 +219,8 @@ processors.pullrequest = {
 
     rejected(request) {
         const author = {
-            username: request.content.pullrequest.author.username,
-            displayname: request.content.pullrequest.author.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const pullrequest = {
             sourcerepo: request.content.pullrequest.source.repository.name,
@@ -308,8 +308,8 @@ processors.pullrequest = {
 
     fulfilled(request) {
         const author = {
-            username: request.content.pullrequest.author.username,
-            displayname: request.content.pullrequest.author.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const pullrequest = {
             sourcerepo: request.content.pullrequest.source.repository.name,
@@ -344,8 +344,8 @@ processors.pullrequest = {
 
     updated(request) {
         const author = {
-            username: request.content.pullrequest.author.username,
-            displayname: request.content.pullrequest.author.display_name
+            username: request.content.actor.username,
+            displayname: request.content.actor.display_name
         };
         const pullrequest = {
             sourcebranch: request.content.pullrequest.source.branch.name,
